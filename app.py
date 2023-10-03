@@ -41,12 +41,8 @@ def index():
 
 @app.route('/artists')
 def artists():
-    data = [
-        {"id": 4, "name": "Guns N Petals"},
-        {"id": 5, "name": "Matt Quevedo"},
-        {"id": 6, "name": "The Wild Sax Band"},
-    ]
-    return render_template('pages/artists.html', artists=data)
+    artists = Artist.query.all()
+    return render_template('pages/artists.html', artists=artists)
 
 
 @app.route('/artists/<int:artist_id>')
@@ -56,13 +52,18 @@ def show_artist(artist_name):
 
 @app.route('/artists/create', methods=['GET'])
 def create_artist_form():
-    #artist_form = ArtistForm()
+    artist_form = ArtistForm()
     return render_template('forms/new_artist.html', form=artist_form)
 
 
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
-    print(request.form['name'])
+    # print(request.form['name'])
+    artist = Artist(name=request.form['name'], city=request.form['city'],
+                    state=request.form['state'], phone=request.form['phone'], genres=request.form['genres'],
+                    image_link=request.form['image_link'], facebook_link=request.form['facebook_link'])
+    db.session.add(artist)
+    db.session.commit()
     return render_template('pages/home.html')
 
 

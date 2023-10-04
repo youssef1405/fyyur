@@ -46,8 +46,9 @@ def artists():
 
 
 @app.route('/artists/<int:artist_id>')
-def show_artist(artist_name):
-    return f'{artist_name}'
+def show_artist(artist_id):
+    artist = Artist.query.get(artist_id)
+    return render_template('pages/show_artist.html', artist=artist)
 
 
 @app.route('/artists/create', methods=['GET'])
@@ -65,6 +66,19 @@ def create_artist_submission():
     db.session.add(artist)
     db.session.commit()
     return render_template('pages/home.html')
+
+
+@app.route('/artists/<int:artist_id>/edit', methods=['GET'])
+def edit_artist(artist_id):
+    form = ArtistForm()
+    artist = Artist.query.get(artist_id)
+    form.name.data = artist.name
+    form.city.data = artist.city
+    form.state.data = artist.state
+    form.phone.data = artist.phone
+    form.image_link.data = artist.image_link
+    form.facebook_link.data = artist.facebook_link
+    return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 
 if __name__ == '__main__':

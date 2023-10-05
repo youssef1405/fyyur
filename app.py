@@ -80,6 +80,12 @@ def edit_artist(artist_id):
     form.facebook_link.data = artist.facebook_link
     return render_template('forms/edit_artist.html', form=form, artist=artist)
 
+# VENUE ROUTES AND CONTROLLERS
+@app.route('/venues/create', methods=['GET'])
+def create_venue_form():
+    venue_form = VenueForm()
+    return render_template('forms/new_venue.html', form=venue_form)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

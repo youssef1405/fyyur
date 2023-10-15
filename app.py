@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from forms import *
@@ -21,6 +21,8 @@ class Artist(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(120))
+    looking_for_venue = db.Column(db.Boolean, default=False)
+    seeking_description = db.Column(db.String(150))
 
 
 class Venue(db.Model):
@@ -34,6 +36,8 @@ class Venue(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(120))
+    looking_for_talent = db.Column(db.Boolean, default=False)
+    seeking_description = db.Column(db.String(150))
 
 
 @app.route('/')
@@ -66,20 +70,44 @@ def create_artist_submission():
                     image_link=request.form['image_link'], facebook_link=request.form['facebook_link'], website_link=request.form['website_link'])
     db.session.add(artist)
     db.session.commit()
+    # flash(f'Artist {request.form["name"]} was successfully listed!')
     return render_template('pages/home.html')
 
 
-@app.route('/artists/<int:artist_id>/edit', methods=['GET'])
+@app.route('/artists/<int:artist_id>/edit', methods=['GET', 'POST'])
 def edit_artist(artist_id):
-    form = ArtistForm()
     artist = Artist.query.get(artist_id)
-    form.name.data = artist.name
-    form.city.data = artist.city
-    form.state.data = artist.state
-    form.phone.data = artist.phone
-    form.image_link.data = artist.image_link
-    form.facebook_link.data = artist.facebook_link
-    return render_template('forms/edit_artist.html', form=form, artist=artist)
+
+    if request.method == 'GET':
+        form = ArtistForm()
+        artist = Artist.query.get(artist_id)
+        form.name.data = artist.name
+        form.city.data = artist.city
+        form.state.data = artist.state
+        form.genres.data = artist.genres
+        form.phone.data = artist.phone
+        form.image_link.data = artist.image_link
+        form.facebook_link.data = artist.facebook_link
+        form.seeking_description.data = artist.seeking_description
+        form.seeking_venue.data = artist.looking_for_venue
+        return render_template('forms/edit_artist.html', form=form, artist=artist)
+    else:
+        artist.name = request.form['name']
+        artist.city = request.form['city']
+        artist.state = request.form['state']
+        artist.phone = request.form['phone']
+        artist.geners = request.form['genres']
+        artist.facebook_link = request.form['facebook_link']
+        artist.website_link = request.form['website_link']
+        artist.image_link = request.form['image_link']
+        artist.seeking_description = request.form['seeking_description']
+        if 'seeking_venue' in request.form:
+            artist.looking_for_venue = bool(request.form['seeking_venue'])
+        else:
+            artist.looking_for_venue = False
+        db.session.commit()
+        return redirect(url_for('show_artist', artist_id=artist_id))
+
 
 # VENUE ROUTES AND CONTROLLERS
 
@@ -130,16 +158,26 @@ def edit_venue(venue_id):
         venue_form.genres.data = venue.genres
         venue_form.facebook_link.data = venue.facebook_link
         venue_form.website_link.data = venue.website_link
+        venue_form.image_link.data = venue.image_link
+        venue_form.seeking_description.data = venue.seeking_description
+        venue_form.seeking_talent.data = venue.looking_for_talent
         return render_template('forms/edit_venue.html', form=venue_form, venue=venue)
     else:
+
         venue.name = request.form['name']
         venue.city = request.form['city']
         venue.state = request.form['state']
         venue.address = request.form['address']
         venue.phone = request.form['phone']
         venue.geners = request.form['genres']
+        venue.image_link = request.form['image_link']
         venue.facebook_link = request.form['facebook_link']
         venue.website_link = request.form['website_link']
+        venue.seeking_description = request.form['seeking_description']
+        if 'seeking_talent' in request.form:
+            venue.looking_for_talent = bool(request.form['seeking_talent'])
+        else:
+            venue.looking_for_talent = False
         db.session.commit()
         return redirect(url_for('show_venue', venue_id=venue_id))
 

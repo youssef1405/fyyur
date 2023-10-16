@@ -59,12 +59,6 @@ class Show(db.Model):
     def __str__(self):
         return f'Show {self.venue_id} {self.artist_id} {self.show_start_time}'
 
-# shows = db.Table('shows', db.Column('artist_id',
-#                                     db.Integer, db.ForeignKey('artist.id'), primary_key=True),
-#                  db.Column('venue_id', db.Integer, db.ForeignKey(
-#                      'venue.id'), primary_key=True),
-#                  db.Column('show_start_time', db.DateTime, nullable=False))
-
 
 @app.route('/')
 def index():
@@ -212,8 +206,19 @@ def edit_venue(venue_id):
 
 @app.route('/shows', methods=['GET'])
 def shows():
-    shows = Show.query.all()
-    return render_template('pages/shows.html', shows=shows)
+    shows_data = []
+    shows = Show.query.join(Venue, Show.venue_id == Venue.id).join(
+        Artist, Show.artist_id == Artist.id).all()
+    for show in shows:
+        shows_data.append({
+            'artist_id': show.artist_id,
+            'venue_id': show.venue_id,
+            'artist_name': show.artist.name,
+            'venue_name': show.venue.name,
+            'artist_image_link': show.artist.image_link,
+            'start_time': show.show_start_time
+        })
+    return render_template('pages/shows.html', shows=shows_data)
 
 
 @app.route('/shows/create', methods=['GET', 'POST'])

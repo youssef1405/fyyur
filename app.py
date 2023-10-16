@@ -23,6 +23,10 @@ class Artist(db.Model):
     website_link = db.Column(db.String(120))
     looking_for_venue = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String(150))
+    shows = db.relationship('Show', backref='artist', lazy=True)
+
+    def __str__(self):
+        return f'Artist: {self.name}'
 
 
 class Venue(db.Model):
@@ -38,6 +42,28 @@ class Venue(db.Model):
     website_link = db.Column(db.String(120))
     looking_for_talent = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String(150))
+    shows = db.relationship('Show', backref='venue', lazy=True)
+
+    def __str__(self):
+        return f'Venue: {self.name}'
+
+
+class Show(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    artist_id = db.Column(db.Integer, db.ForeignKey(
+        'artist.id'))
+    venue_id = db.Column(db.Integer, db.ForeignKey(
+        'venue.id'))
+    show_start_time = db.Column(db.DateTime, nullable=False)
+
+    def __str__(self):
+        return f'Show {self.venue_id} {self.artist_id} {self.show_start_time}'
+
+# shows = db.Table('shows', db.Column('artist_id',
+#                                     db.Integer, db.ForeignKey('artist.id'), primary_key=True),
+#                  db.Column('venue_id', db.Integer, db.ForeignKey(
+#                      'venue.id'), primary_key=True),
+#                  db.Column('show_start_time', db.DateTime, nullable=False))
 
 
 @app.route('/')
@@ -180,6 +206,28 @@ def edit_venue(venue_id):
             venue.looking_for_talent = False
         db.session.commit()
         return redirect(url_for('show_venue', venue_id=venue_id))
+
+# Shows Routes and Controllers
+
+
+@app.route('/shows', methods=['GET'])
+def shows():
+    shows = Show.query.all()
+    return render_template('pages/shows.html', shows=shows)
+
+
+@app.route('/shows/create', methods=['GET', 'POST'])
+def create_shows():
+    if request.method == 'GET':
+        form = ShowForm()
+        return render_template('forms/new_show.html', form=form)
+    else:
+        show_form = request.form
+        show = Show(artist_id=show_form['artist_id'],
+                    venue_id=show_form['venue_id'], show_start_time=show_form['start_time'])
+        db.session.add(show)
+        db.session.commit()
+        return render_template('pages/home.html')
 
 
 if __name__ == '__main__':
